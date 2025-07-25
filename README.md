@@ -433,10 +433,9 @@ WebSocket connection failed
 
 ## 📚 参考資料
 
-- [Gemini Live API公式ドキュメント](https://ai.google.dev/api/rest)
+- [Gemini Live API公式ドキュメント](https://ai.google.dev/gemini-api/docs/live)
 - [Google Cloud認証ガイド](https://cloud.google.com/docs/authentication)
-- [Next.js公式ドキュメント](https://nextjs.org/docs)
-- [FastAPI公式ドキュメント](https://fastapi.tiangolo.com/)
+- [Etsujiさんのvideo-monitoring-handson](https://github.com/google-cloud-japan/sa-ml-workshop/tree/main/video-monitoring-handson)
 
 ## 🎉 まとめ
 
