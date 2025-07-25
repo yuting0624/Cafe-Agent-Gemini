@@ -29,6 +29,7 @@ export default function VoiceClient() {
   const [micStatus, setMicStatus] = useState("off"); // "on" | "off"
   const [buttonDisabled, setButtonDisabled] = useState(false);
   const [transcriptions, setTranscriptions] = useState([]); // トランスクリプション履歴
+  const [orderConfirmation, setOrderConfirmation] = useState(null); // 注文確認データ
 
   // ===== ユニークID生成用 =====
   const transcriptionIdRef = useRef(0);
@@ -181,6 +182,10 @@ export default function VoiceClient() {
           type: 'output'
         }]);
       }
+    } else if (messageResponse.type == "order_confirmation") {
+      // 注文確認データを受信
+      console.log("注文確認データを受信:", messageResponse.data);
+      setOrderConfirmation(messageResponse.data);
     }
   };
 
@@ -254,7 +259,7 @@ export default function VoiceClient() {
           onClick={() => setMicStatus("off")}
         >
           <span className="text-2xl animate-pulse">🎤</span>
-          <span>話すのをやめる</span>
+          <span>マイクをオフにする</span>
         </button>
       );
     } else {
@@ -264,7 +269,7 @@ export default function VoiceClient() {
           onClick={() => setMicStatus("on")}
         >
           <span className="text-2xl">🎤</span>
-          <span>話し始める</span>
+          <span>マイクをオンにする</span>
         </button>
       );
     }
@@ -292,6 +297,88 @@ export default function VoiceClient() {
       </div>
     </div>
   );
+
+  // 注文確認表示コンポーネント
+  const renderOrderConfirmation = () => {
+    if (!orderConfirmation) return null;
+
+    const handleConfirmOrder = () => {
+      setOrderConfirmation({ ...orderConfirmation, status: 'confirmed' });
+      // 注文確認のメッセージを音声で送信（今後実装可能）
+    };
+
+    const handleModifyOrder = () => {
+      setOrderConfirmation(null);
+      // 注文変更のメッセージを音声で送信（今後実装可能）
+    };
+
+    const total = orderConfirmation.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    
+    return (
+      <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl shadow-xl p-6 border-2 border-amber-200 mb-6">
+        <div className="flex items-center mb-4">
+          <span className="text-3xl mr-3">📋</span>
+          <h2 className="text-2xl font-bold text-amber-800">ご注文内容の確認</h2>
+        </div>
+        
+        <div className="bg-white rounded-lg p-4 mb-4 shadow-inner">
+          <h3 className="font-semibold text-gray-800 mb-3 flex items-center">
+            <span className="text-xl mr-2">🍽️</span>
+            ご注文商品
+          </h3>
+          <div className="space-y-2">
+            {orderConfirmation.items.map((item, index) => (
+              <div key={index} className="flex justify-between items-center py-2 border-b border-gray-100 last:border-b-0">
+                <div className="flex-1">
+                  <span className="text-gray-800 font-medium">{item.name}</span>
+                  <span className="text-gray-600 ml-2">× {item.quantity}</span>
+                </div>
+                <span className="text-amber-700 font-semibold">{(item.price * item.quantity).toLocaleString()}円</span>
+              </div>
+            ))}
+          </div>
+          
+          <div className="border-t-2 border-amber-200 mt-4 pt-4">
+            <div className="flex justify-between items-center">
+              <span className="text-lg font-bold text-gray-800">合計金額</span>
+              <span className="text-2xl font-bold text-amber-700">{orderConfirmation.total_price.toLocaleString()}円</span>
+            </div>
+            <div className="flex justify-between items-center mt-2">
+              <span className="text-sm text-gray-600">お受け取り予定</span>
+              <span className="text-sm font-semibold text-green-600">{orderConfirmation.pickup_time}</span>
+            </div>
+          </div>
+        </div>
+
+        {orderConfirmation.status === 'confirmation_needed' && (
+          <div className="flex space-x-4">
+            <button
+              onClick={handleConfirmOrder}
+              className="flex-1 bg-gradient-to-r from-green-500 to-green-600 text-white font-semibold py-3 px-6 rounded-lg hover:from-green-600 hover:to-green-700 transform hover:scale-105 transition-all duration-200 shadow-lg"
+            >
+              <span className="mr-2">✅</span>
+              この内容で確定
+            </button>
+            <button
+              onClick={handleModifyOrder}
+              className="flex-1 bg-gradient-to-r from-gray-500 to-gray-600 text-white font-semibold py-3 px-6 rounded-lg hover:from-gray-600 hover:to-gray-700 transform hover:scale-105 transition-all duration-200 shadow-lg"
+            >
+              <span className="mr-2">✏️</span>
+              内容を変更
+            </button>
+          </div>
+        )}
+
+        {orderConfirmation.status === 'confirmed' && (
+          <div className="bg-green-100 rounded-lg p-4 text-center">
+            <span className="text-2xl mr-2">🎉</span>
+            <span className="text-lg font-bold text-green-800">ご注文を承りました！</span>
+            <p className="text-sm text-green-700 mt-1">準備ができ次第、お声がけいたします。</p>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   // トランスクリプション表示コンポーネント
   const renderTranscriptions = () => {
@@ -369,9 +456,9 @@ export default function VoiceClient() {
               <div className="mt-6 p-4 bg-amber-50 rounded-lg border border-amber-200">
                 <h3 className="text-sm font-semibold text-amber-800 mb-2">💡 操作方法</h3>
                 <ul className="text-xs text-gray-700 space-y-1">
-                  <li>• 「話し始める」ボタンを押して話しかけてください</li>
+                  <li>• 「マイクをオンにする」ボタンを押して話しかけてください</li>
                   <li>• Patrickが応答するまで少しお待ちください</li>
-                  <li>• 話し終わったら「話すのをやめる」を押してください</li>
+                  <li>• 話し終わったら「マイクをオフにする」を押してください</li>
                 </ul>
               </div>
             )}
@@ -420,6 +507,9 @@ export default function VoiceClient() {
 
         {/* 右側: 会話ログ + カフェ情報 */}
         <div className="space-y-6">
+          {/* 注文確認 */}
+          {renderOrderConfirmation()}
+
           {/* 音声認識結果（トランスクリプション） */}
           {connectionStatus === "connected" && (
             <div className="bg-white rounded-2xl shadow-xl p-6">
@@ -458,31 +548,6 @@ export default function VoiceClient() {
               <div className="flex items-center space-x-2">
                 <span>🤖</span>
                 <span>Powered by Gemini Live API</span>
-              </div>
-            </div>
-          </div>
-
-          {/* 技術情報 */}
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl shadow-xl p-6 border border-blue-200">
-            <h2 className="text-xl font-bold text-blue-800 mb-4 flex items-center">
-              🔧 技術仕様
-            </h2>
-            <div className="space-y-2 text-sm text-blue-700">
-                              <div className="flex items-center space-x-2">
-                  <span>🤖</span>
-                  <span>AI Model: Gemini 2.5 Flash Live Preview Native Audio </span>
-                </div>
-              <div className="flex items-center space-x-2">
-                <span>🌐</span>
-                <span>Frontend: Next.js + Tailwind CSS</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <span>⚡</span>
-                <span>Backend: FastAPI + WebSocket</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <span>🎵</span>
-                <span>Audio: Real-time PCM Streaming</span>
               </div>
             </div>
           </div>

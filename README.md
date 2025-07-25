@@ -14,7 +14,8 @@
 - **コア技術**: 
   - **フロントエンド ↔ バックエンド**: WebSocket通信
   - **バックエンド ↔ Google Cloud**: Gemini Live API
-- **体験内容**: リアルタイム双方向音声ストリーミング
+  - **Function Calling**: 注文確認の自動化
+- **体験内容**: リアルタイム双方向音声ストリーミング + インテリジェント注文管理
 
 ### 🏗️ アーキテクチャ
 
@@ -65,7 +66,7 @@ Cafe-Agent-Gemini/
 
 #### 🔑 認証設定（2つの方法から選択）
 
-**方法A: Google Cloud SDK使用（推奨）**
+**Google Cloud SDK使用**
 ```bash
 # 1. Google Cloud SDKをインストール
 # https://cloud.google.com/sdk/docs/install
@@ -74,15 +75,6 @@ Cafe-Agent-Gemini/
 gcloud auth login
 gcloud auth application-default login
 gcloud config set project YOUR_PROJECT_ID
-```
-
-**方法B: サービスアカウントキー使用**
-```bash
-# 1. Google Cloud Consoleでサービスアカウントを作成
-# 2. キーファイル（JSON）をダウンロード
-# 3. 環境変数を設定
-export GOOGLE_APPLICATION_CREDENTIALS="path/to/your/key.json"
-export GOOGLE_CLOUD_PROJECT="your-project-id"
 ```
 
 #### 🚀 APIの有効化
@@ -143,22 +135,39 @@ npm run dev
 
 1. **🌐 ブラウザアクセス**: http://localhost:3000
 2. **☕ 接続**: 「カフェに電話をかける」ボタンをクリック
-3. **🎤 音声入力**: 「話し始める」ボタンを押して話しかける
+3. **🎤 音声入力**: 「マイクをオンにする」ボタンをクリックして話しかける
 4. **🤖 AI応答**: Patrickがリアルタイムで音声応答
 5. **🔄 会話継続**: 自然な対話を楽しむ
 6. **📞 終了**: 「通話を終了」ボタンで切断
 
 ### 💬 会話例
 
+**📞 基本的な問い合わせ**
 ```
 👤 ユーザー: 「メニューを教えてください」
-🤖 Patrick: 「承知いたします。コーヒー類ではドリップコーヒーが450円、カフェラテが550円...」
+🤖 Patrick: 「承知いたしました。コーヒー類ではドリップコーヒーが450円、カフェラテが550円...」
 
 👤 ユーザー: 「おすすめはありますか？」
 🤖 Patrick: 「当店の人気No.1はカフェラテです。まろやかな味わいで...」
+```
 
+**🛒 注文から確認まで**
+```
 👤 ユーザー: 「カフェラテとアップルパイをお願いします」
-🤖 Patrick: 「承知いたします。カフェラテとアップルパイですね。お受け取り時間は...」
+🤖 Patrick: 「承知いたしました。カフェラテとアップルパイが一つずつですね。ほかに注文したいものはございますか？」
+
+👤 ユーザー: 「それでお願いします」
+🤖 Patrick: 「かしこまりました。ご注文内容を復唱いたします」
+
+💻 【画面に自動表示される注文確認UI】
+📋 ご注文内容の確認
+🍽️ カフェラテ × 1      550円
+🍽️ アップルパイ × 1    520円
+合計: 1,070円
+お受け取り予定: 15分後
+
+👤 ユーザー: [✅ この内容で確定] ボタンをクリック
+🤖 Patrick: 「ありがとうございます。15分後にご用意いたします」
 ```
 
 ## 🧑‍💻 サンプルコードの説明
@@ -176,6 +185,8 @@ npm run dev
 - **Gemini Live API連携**: リアルタイム音声AI処理
 - **音声ストリーミング**: PCM音声データの双方向転送
 - **WebSocketサーバー**: フロントエンドとの接続管理
+- **Function Calling**: 注文確認ツールの自動実行
+- **構造化データ生成**: 音声会話から注文データを抽出
 
 #### 🎯 重要なカスタマイズポイント
 
@@ -197,6 +208,25 @@ AI_TOP_P = 0.8        # 応答の多様性 (0.0-1.0)
 ```python
 VOICE_NAME = 'Puck'     # 音声の種類: Puck, Aoede など
 LANGUAGE = 'Japanese'   # 言語: Japanese, English, Korean
+```
+
+**4. Function Calling設定**
+```python
+def get_order_tools(self):
+    """注文確認用のFunction Callingツール"""
+    async def summarize_and_confirm_order(items: list, total_price: int, pickup_time: str = "15分後"):
+        # 注文内容を構造化データとして処理
+        # WebSocket経由でフロントエンドに送信
+        return confirmation_message
+    
+    return [summarize_and_confirm_order]
+
+# システムプロンプトで Function Calling を指示
+SYSTEM_INSTRUCTION = '''
+【注文確認機能】
+お客様が注文を完了したとき（「それでお願いします」「注文をお願いします」など）は、
+必ずsummarize_and_confirm_order関数を使用して注文内容を確認してください。
+'''
 ```
 
 ## 🎓 Next Step: システムプロンプト演習
@@ -431,5 +461,8 @@ WebSocket connection failed
 - 🔄 リアルタイム音声ストリーミング
 - 🏗️ WebSocket通信の活用
 - 🎨 UIデザインの考慮事項
+- ⚡ Function Calling による機能拡張
+- 📊 音声から構造化データへの変換
+- 🎭 音声UIとビジュアルUIの連携
 
 さあ、あなただけのオリジナルAIエージェントを作成してみましょう！ 

@@ -124,6 +124,7 @@ SYSTEM_INSTRUCTION = '''
 - チーズケーキ：480円
 - アップルパイ：520円
 おすすめは日替わりパスタです。
+本日の日替わりパスタは、特製ミートソーススパゲッティです。自家製のミートソースが自慢です。
 
 【対応の流れ】
 1. 明るく挨拶をして、カフェ名と自分の名前を名乗る
@@ -142,8 +143,25 @@ SYSTEM_INSTRUCTION = '''
 - 分からないことは素直に「確認いたします」と伝える
 - お客様の名前を伺い、親しみやすい雰囲気を作る
 - 電話対応らしい丁寧な言葉遣いを使う
+- 会話が開始されたら、必ず最初に「お電話ありがとうございます。Starlight Cafeのパトリックと申します。本日はどのようなご用件でしょうか？」と挨拶してください。
 
-【重要】会話が開始されたら、必ず最初に「お電話ありがとうございます。Starlight Cafeのパトリックと申します。本日はどのようなご用件でしょうか？」と挨拶してください。
+【最重要・注文確認機能】
+以下のいずれかの条件に当てはまる場合は、必ずsummarize_and_confirm_orderツールを呼び出して注文内容を確認してください：
+
+1. お客様が注文を完了する意思を示した場合：
+- 「以上です」「それだけです」「お願いします」
+- 「はい」「大丈夫です」（注文の文脈で）
+- 「これで全部です」「それでお願いします」
+
+2. メニュー項目を注文された後：
+- 追加注文の有無を確認
+- 「他にご注文はございますか？」と尋ねた後の返答
+
+3. 会話の終了が近づいている場合：
+- お会計や受け取り時間の話題に移る前
+- お客様が会話を終えようとしている様子が見られたとき
+
+このツールの呼び出しは必須です。注文内容の確認漏れがないよう、積極的に使用してください。
 '''
 
 # ===== 【ハンズオン・カスタマイズ可能】AI応答設定 =====
@@ -173,6 +191,69 @@ class VoicecallBackend:
         self.live_events = None
         self.live_request_queue = None
 
+    def get_order_tools(self):
+        """
+        注文確認用のFunction Callingツールを返す
+        """
+        async def summarize_and_confirm_order(items: list, total_price: int, pickup_time: str = "15分後") -> str:
+            """
+            Tool to summarize and confirm customer's order
+            
+            Args:
+                items: List of ordered items [{"name": "商品名", "quantity": 1, "price": 550}]
+                total_price: Total price in yen
+                pickup_time: Estimated pickup time (default: "15分後")
+            
+            Returns:
+                Confirmation message
+            """
+            import json
+            from datetime import datetime
+            
+            # 注文確認データを準備
+            order_summary = {
+                "type": "order_confirmation",
+                "timestamp": datetime.now().isoformat(),
+                "items": items,
+                "total_price": total_price,
+                "pickup_time": pickup_time,
+                "status": "confirmation_needed"
+            }
+            
+            # フロントエンドに注文確認データを送信
+            try:
+                if self.client_ws:
+                    message = {
+                        "type": "order_confirmation",
+                        "data": order_summary
+                    }
+                    
+                    # 非同期でWebSocketメッセージを送信
+                    await self.client_ws.send_text(json.dumps(message))
+                    
+                    logger.info(f"📋 注文確認データを送信: {order_summary}")
+                
+            except Exception as e:
+                logger.error(f"❌ 注文確認データ送信エラー: {e}")
+            
+            # AIエージェントへの応答メッセージ
+            items_text = "\n".join([f"- {item['name']} x {item['quantity']}" for item in items])
+            confirmation_message = f"""
+かしこまりました。ご注文内容を復唱いたします。
+
+【ご注文内容】
+{items_text}
+
+合計: {total_price:,}円
+お受け取り予定: {pickup_time}
+
+上記の内容でよろしいでしょうか？
+            """.strip()
+            
+            return confirmation_message
+        
+        return [summarize_and_confirm_order]
+
     async def create_runner(self):
         """
         Gemini Live APIランナーの作成と設定
@@ -191,6 +272,9 @@ class VoicecallBackend:
             top_p=AI_TOP_P,             # 応答の多様性
         )
         
+        # ===== Function Calling用ツールの取得 =====
+        order_tools = self.get_order_tools()
+
         # ===== AIエージェントの作成 =====
         voicecall_agent = LlmAgent(
             name='starlight_cafe_agent',
@@ -198,6 +282,7 @@ class VoicecallBackend:
             description='Starlight Cafeの電話対応スタッフPatrickとして、お客様と親切で丁寧な音声対話を行うエージェント',
             instruction=SYSTEM_INSTRUCTION,  # システムプロンプトを適用
             generate_content_config=generate_content_config,
+            tools=order_tools,  # Function Callingツールを追加
         )
 
         # ランナーの作成
