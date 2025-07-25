@@ -1,8 +1,10 @@
 # ☕ Starlight Cafe - Gemini Live API 音声対話システム
 
 **Google Cloud Gemini Live APIを活用したリアルタイム音声対話の技術デモ**
+
 このデモは[Etsujiさんのvideo-monitoring-handson](https://github.com/google-cloud-japan/sa-ml-workshop/tree/main/video-monitoring-handson)のsample02アプリをベースに作成したものです。
-架空のカフェ「Starlight Cafe」の電話対応をシミュレーションする、AIエージェントとの音声通話システムです。
+
+架空のカフェ「Starlight Cafe」の電話対応をシミュレーションする、AIエージェントとの音声通話Webアプリです。
 
 ## 📋 コンテンツ全体像
 
