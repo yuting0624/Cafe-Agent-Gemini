@@ -1,4 +1,4 @@
-# 🎯 Starlight Cafe - Gemini Live API 音声対話システム
+# ☕ Starlight Cafe - Gemini Live API 音声対話システム
 
 **Google Cloud Gemini Live APIを活用したリアルタイム音声対話の技術デモ**
 
@@ -20,7 +20,7 @@
 graph LR
     A[👤 ユーザー] -->|音声入力| B[🌐 ブラウザ]
     B -->|WebSocket| C[🖥️ FastAPI Backend]
-    C -->|Gemini Live API| D[🤖 Google Cloud]
+    C -->|Gemini Live API| D[☁ Google Cloud]
     D -->|音声応答| C
     C -->|WebSocket| B
     B -->|音声出力| A
