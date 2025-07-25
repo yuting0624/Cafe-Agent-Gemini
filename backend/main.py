@@ -72,9 +72,9 @@ if not PROJECT_ID:
         exit(1)
 
 # ===== 【ハンズオン・カスタマイズ可能】基本設定 =====
-LOCATION = os.environ.get('GOOGLE_CLOUD_LOCATION')
-VOICE_NAME = os.environ.get('VOICE_NAME')  # 🎯 変更可能: ["Aoede", "Puck", "Charon", "Kore", "Fenrir", "Leda", "Orus", "Zephyr"]
-LANGUAGE = os.environ.get('LANGUAGE')   # 🎯 変更可能: English, Japanese, Korean
+LOCATION = os.environ.get('GOOGLE_CLOUD_LOCATION', 'us-central1')  # Gemini Live APIの最も安定したリージョン
+VOICE_NAME = os.environ.get('VOICE_NAME', 'Puck')  # 🎯 変更可能: ["Aoede", "Puck", "Charon", "Kore", "Fenrir", "Leda", "Orus", "Zephyr"]
+LANGUAGE = os.environ.get('LANGUAGE', 'Japanese')   # 🎯 変更可能: English, Japanese, Korean
 
 # 言語コードマッピング
 LANG_CODE_MAP = {
@@ -116,12 +116,14 @@ SYSTEM_INSTRUCTION = '''
 - カフェラテ：550円
 - カプチーノ：550円
 - エスプレッソ：350円
+おすすめはカフェラテです。
 
 フード類：
 - ホットサンドイッチ：780円
-- パスタランチ：1,200円
+- 日替わりパスタ：1,00円
 - チーズケーキ：480円
 - アップルパイ：520円
+おすすめは日替わりパスタです。
 
 【対応の流れ】
 1. 明るく挨拶をして、カフェ名と自分の名前を名乗る
@@ -134,7 +136,6 @@ SYSTEM_INSTRUCTION = '''
 - 予約・注文受付
 - メニューの説明・おすすめ
 - 営業時間・アクセス案内
-- イベント情報の案内
 
 【注意事項】
 - 常に親切で温かい対応を心がける
@@ -142,7 +143,7 @@ SYSTEM_INSTRUCTION = '''
 - お客様の名前を伺い、親しみやすい雰囲気を作る
 - 電話対応らしい丁寧な言葉遣いを使う
 
-【重要】会話が開始されたら、必ず最初に「お電話ありがとうございます。Starlight Cafeのパトリックと申します。本日はどのようなご用件でしょうか？」と挨拶してください。これは絶対に守ってください。
+【重要】会話が開始されたら、必ず最初に「お電話ありがとうございます。Starlight Cafeのパトリックと申します。本日はどのようなご用件でしょうか？」と挨拶してください。
 '''
 
 # ===== 【ハンズオン・カスタマイズ可能】AI応答設定 =====

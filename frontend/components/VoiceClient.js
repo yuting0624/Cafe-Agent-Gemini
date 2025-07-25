@@ -195,7 +195,7 @@ export default function VoiceClient() {
     ],
     food: [
       { name: "ホットサンドイッチ", price: "780円", description: "具だくさんでボリューム満点" },
-      { name: "パスタランチ", price: "1,200円", description: "サラダ・ドリンク付きセット" },
+      { name: "日替わりパスタ", price: "1,000円", description: "サラダ付きセット" },
       { name: "チーズケーキ", price: "480円", description: "濃厚でクリーミー" },
       { name: "アップルパイ", price: "520円", description: "温めてご提供" }
     ]
@@ -468,10 +468,10 @@ export default function VoiceClient() {
               🔧 技術仕様
             </h2>
             <div className="space-y-2 text-sm text-blue-700">
-              <div className="flex items-center space-x-2">
-                <span>🤖</span>
-                <span>AI Model: Gemini 2.5 Flash Live Preview Native Audio</span>
-              </div>
+                              <div className="flex items-center space-x-2">
+                  <span>🤖</span>
+                  <span>AI Model: Gemini 2.5 Flash Live Preview Native Audio </span>
+                </div>
               <div className="flex items-center space-x-2">
                 <span>🌐</span>
                 <span>Frontend: Next.js + Tailwind CSS</span>
