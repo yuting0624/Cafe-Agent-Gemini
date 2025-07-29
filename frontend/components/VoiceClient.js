@@ -38,6 +38,9 @@ export default function VoiceClient() {
     return `transcription_${Date.now()}_${transcriptionIdRef.current}`;
   };
 
+  // ===== 自動スクロール用参照 =====
+  const transcriptionsEndRef = useRef(null);
+
   // ===== API・音声管理のセットアップ =====
   const _voicecallApi = useRef(new VoicecallBackendAPI(BACKEND_URL));
   const voicecallApi = _voicecallApi.current;
@@ -59,7 +62,7 @@ export default function VoiceClient() {
   useEffect(() => {
     if (connectionStatus == "connected") {
       startAudioInput(); // マイクへのアクセス開始
-      setMicStatus("off"); // 初期状態はマイクオフ
+      setMicStatus("on"); // 初期状態はマイクオン（電話の想定）
       setTranscriptions([]); // トランスクリプション履歴をクリア
       transcriptionIdRef.current = 0; // IDカウンターをリセット
     } else {
@@ -80,6 +83,16 @@ export default function VoiceClient() {
       _stopAudioStream();
     }
   }, [micStatus]);
+
+  // トランスクリプション追加時の自動スクロール
+  useEffect(() => {
+    if (transcriptionsEndRef.current) {
+      transcriptionsEndRef.current.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'end' 
+      });
+    }
+  }, [transcriptions]);
 
   // マイクアクセス開始
   const startAudioInput = async () => {
@@ -211,10 +224,7 @@ export default function VoiceClient() {
   const conversationHints = [
     "📋 「メニューを教えてください」",
     "☕ 「おすすめのコーヒーは？」",
-    "⏰ 「営業時間は何時まで？」",
-    "📍 「場所はどこですか？」",
-    "🚗 「テイクアウトできますか？」",
-    "💳 「支払い方法は？」"
+    "⏰ 「営業時間は何時まで？」"
   ];
 
   // ===== UIコンポーネント生成 =====
@@ -258,8 +268,8 @@ export default function VoiceClient() {
           className="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-4 px-8 rounded-xl shadow-lg transition-all duration-200 flex items-center justify-center space-x-3 text-lg"
           onClick={() => setMicStatus("off")}
         >
-          <span className="text-2xl animate-pulse">🎤</span>
-          <span>マイクをオフにする</span>
+          <span className="text-2xl animate-pulse">🔇</span>
+          <span>マイクをミュート</span>
         </button>
       );
     } else {
@@ -268,8 +278,8 @@ export default function VoiceClient() {
           className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-8 rounded-xl shadow-lg transition-all duration-200 flex items-center justify-center space-x-3 text-lg"
           onClick={() => setMicStatus("on")}
         >
-          <span className="text-2xl">🎤</span>
-          <span>マイクをオンにする</span>
+          <span className="text-2xl">🔊</span>
+          <span>マイクをオン</span>
         </button>
       );
     }
@@ -282,6 +292,14 @@ export default function VoiceClient() {
       <span className="text-lg font-medium text-gray-700">
         {connectionStatus === "connected" ? "📞 Patrickと通話中" : "📞 未接続"}
       </span>
+      {connectionStatus === "connected" && (
+        <div className="flex items-center space-x-2">
+          <div className={`w-3 h-3 rounded-full ${micStatus === "on" ? "bg-green-500" : "bg-red-500"}`}></div>
+          <span className="text-sm font-medium text-gray-600">
+            {micStatus === "on" ? "🎤 マイクON" : "🔇 Muted"}
+          </span>
+        </div>
+      )}
     </div>
   );
 
@@ -357,14 +375,14 @@ export default function VoiceClient() {
               className="flex-1 bg-gradient-to-r from-green-500 to-green-600 text-white font-semibold py-3 px-6 rounded-lg hover:from-green-600 hover:to-green-700 transform hover:scale-105 transition-all duration-200 shadow-lg"
             >
               <span className="mr-2">✅</span>
-              この内容で確定
+              注文を確定
             </button>
             <button
               onClick={handleModifyOrder}
               className="flex-1 bg-gradient-to-r from-gray-500 to-gray-600 text-white font-semibold py-3 px-6 rounded-lg hover:from-gray-600 hover:to-gray-700 transform hover:scale-105 transition-all duration-200 shadow-lg"
             >
               <span className="mr-2">✏️</span>
-              内容を変更
+              注文を変更
             </button>
           </div>
         )}
@@ -386,7 +404,7 @@ export default function VoiceClient() {
       return (
         <div className="text-center text-gray-500 text-sm py-8">
           <div className="text-4xl mb-2">🎙️</div>
-          <p>音声認識が開始されると</p>
+          <p>文字起こしが開始されると</p>
           <p>会話内容がここに表示されます</p>
         </div>
       );
@@ -415,6 +433,8 @@ export default function VoiceClient() {
             <p className="text-sm text-gray-800 leading-relaxed">{transcription.text}</p>
           </div>
         ))}
+        {/* 自動スクロール用の要素 */}
+        <div ref={transcriptionsEndRef} />
       </div>
     );
   };
@@ -456,9 +476,9 @@ export default function VoiceClient() {
               <div className="mt-6 p-4 bg-amber-50 rounded-lg border border-amber-200">
                 <h3 className="text-sm font-semibold text-amber-800 mb-2">💡 操作方法</h3>
                 <ul className="text-xs text-gray-700 space-y-1">
-                  <li>• 「マイクをオンにする」ボタンを押して話しかけてください</li>
+                  <li>• 接続後、マイクは自動的にONになります</li>
                   <li>• Patrickが応答するまで少しお待ちください</li>
-                  <li>• 話し終わったら「マイクをオフにする」を押してください</li>
+                  <li>• 必要に応じて「マイクをミュート」ボタンで音声入力を停止できます</li>
                 </ul>
               </div>
             )}
@@ -505,23 +525,10 @@ export default function VoiceClient() {
           </div>
         </div>
 
-        {/* 右側: 会話ログ + カフェ情報 */}
+        {/* 右側: 注文確認 + カフェ情報 + トランスクリプション */}
         <div className="space-y-6">
           {/* 注文確認 */}
           {renderOrderConfirmation()}
-
-          {/* 音声認識結果（トランスクリプション） */}
-          {connectionStatus === "connected" && (
-            <div className="bg-white rounded-2xl shadow-xl p-6">
-              <h2 className="text-2xl font-bold text-amber-800 mb-4 flex items-center">
-                🎙️ 音声認識
-              </h2>
-              <p className="text-sm text-gray-600 mb-4">
-                リアルタイムで音声をテキスト化しています
-              </p>
-              {renderTranscriptions()}
-            </div>
-          )}
 
           {/* カフェ情報パネル */}
           <div className="bg-white rounded-2xl shadow-xl p-6">
@@ -551,6 +558,18 @@ export default function VoiceClient() {
               </div>
             </div>
           </div>
+
+          {connectionStatus === "connected" && (
+            <div className="bg-white rounded-2xl shadow-xl p-6">
+              <h2 className="text-2xl font-bold text-amber-800 mb-4 flex items-center">
+                🎙️ 音声トランスクリプション
+              </h2>
+              <p className="text-sm text-gray-600 mb-4">
+                リアルタイムで音声をテキスト化し、新しい会話は自動的にスクロールされます
+              </p>
+              {renderTranscriptions()}
+            </div>
+          )}
         </div>
       </div>
 
