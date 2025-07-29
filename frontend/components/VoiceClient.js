@@ -320,23 +320,11 @@ export default function VoiceClient() {
   const renderOrderConfirmation = () => {
     if (!orderConfirmation) return null;
 
-    const handleConfirmOrder = () => {
-      setOrderConfirmation({ ...orderConfirmation, status: 'confirmed' });
-      // 注文確認のメッセージを音声で送信（今後実装可能）
-    };
-
-    const handleModifyOrder = () => {
-      setOrderConfirmation(null);
-      // 注文変更のメッセージを音声で送信（今後実装可能）
-    };
-
-    const total = orderConfirmation.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    
     return (
       <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl shadow-xl p-6 border-2 border-amber-200 mb-6">
         <div className="flex items-center mb-4">
           <span className="text-3xl mr-3">📋</span>
-          <h2 className="text-2xl font-bold text-amber-800">ご注文内容の確認</h2>
+          <h2 className="text-2xl font-bold text-amber-800">ご注文内容</h2>
         </div>
         
         <div className="bg-white rounded-lg p-4 mb-4 shadow-inner">
@@ -368,32 +356,12 @@ export default function VoiceClient() {
           </div>
         </div>
 
-        {orderConfirmation.status === 'confirmation_needed' && (
-          <div className="flex space-x-4">
-            <button
-              onClick={handleConfirmOrder}
-              className="flex-1 bg-gradient-to-r from-green-500 to-green-600 text-white font-semibold py-3 px-6 rounded-lg hover:from-green-600 hover:to-green-700 transform hover:scale-105 transition-all duration-200 shadow-lg"
-            >
-              <span className="mr-2">✅</span>
-              注文を確定
-            </button>
-            <button
-              onClick={handleModifyOrder}
-              className="flex-1 bg-gradient-to-r from-gray-500 to-gray-600 text-white font-semibold py-3 px-6 rounded-lg hover:from-gray-600 hover:to-gray-700 transform hover:scale-105 transition-all duration-200 shadow-lg"
-            >
-              <span className="mr-2">✏️</span>
-              注文を変更
-            </button>
-          </div>
-        )}
-
-        {orderConfirmation.status === 'confirmed' && (
-          <div className="bg-green-100 rounded-lg p-4 text-center">
-            <span className="text-2xl mr-2">🎉</span>
-            <span className="text-lg font-bold text-green-800">ご注文を承りました！</span>
-            <p className="text-sm text-green-700 mt-1">準備ができ次第、お声がけいたします。</p>
-          </div>
-        )}
+        {/* 音声で注文変更がある場合は、自動で画面が更新されます */}
+        <div className="bg-blue-50 rounded-lg p-3 text-center">
+          <span className="text-sm text-blue-700">
+            💬 注文の変更がある場合は、Patrickに音声で伝えてください
+          </span>
+        </div>
       </div>
     );
   };

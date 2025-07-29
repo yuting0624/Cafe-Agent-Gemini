@@ -1,5 +1,5 @@
 """
-【ハンズオン教材】Starlight Cafe 音声対話システム - バックエンド
+Starlight Cafe 音声対話システム - バックエンド
 
 このファイルはGemini Live APIを使用したリアルタイム音声対話システムのバックエンドです。
 
@@ -9,10 +9,16 @@
 3. リアルタイム音声ストリーミング
 4. AIエージェント（Patrick）の設定とメッセージ処理
 
-【カスタマイズポイント】
-- SYSTEM_INSTRUCTION: AIエージェントの役割・性格・知識を設定
-- 音声設定: VOICE_NAME, LANGUAGEで音声特性を変更
-- 応答設定: temperature, top_pで応答の創造性を調整
+【🎯 ハンズオン・カスタマイズについて】
+ハンズオン時にカスタマイズする設定項目は system_instruction.py に分離されています：
+- SYSTEM_INSTRUCTION: AIエージェントの役割・性格・知識
+- VOICE_NAME: 音声の種類
+- LANGUAGE: 対応言語  
+- AI_TEMPERATURE: 応答の創造性レベル
+- AI_TOP_P: 応答の多様性
+
+main.py を直接編集せず、system_instruction.py のみを変更してください。
+これにより、誤って重要な処理部分を変更してしまうリスクを避けられます。
 """
 
 import asyncio
@@ -25,6 +31,7 @@ import time
 import uuid
 import google.auth
 from dotenv import load_dotenv
+from system_instruction import SYSTEM_INSTRUCTION, AI_TEMPERATURE, AI_TOP_P, VOICE_NAME, LANGUAGE
 
 from google.genai.types import (
     Part,
@@ -71,10 +78,14 @@ if not PROJECT_ID:
         print("2. または GOOGLE_CLOUD_PROJECT と GOOGLE_APPLICATION_CREDENTIALS を.envに設定")
         exit(1)
 
-# ===== 【ハンズオン・カスタマイズ可能】基本設定 =====
-LOCATION = os.environ.get('GOOGLE_CLOUD_LOCATION', 'us-central1')  # Gemini Live APIの最も安定したリージョン
-VOICE_NAME = os.environ.get('VOICE_NAME', 'Puck')  # 🎯 変更可能: ["Aoede", "Puck", "Charon", "Kore", "Fenrir", "Leda", "Orus", "Zephyr"]
-LANGUAGE = os.environ.get('LANGUAGE', 'Japanese')   # 🎯 変更可能: English, Japanese, Korean
+# Environment setup
+LOCATION = os.getenv('GOOGLE_CLOUD_LOCATION', 'us-central1')
+os.environ['GOOGLE_CLOUD_LOCATION'] = LOCATION
+
+# ===== 音声設定（環境変数 or system_instruction.py からの設定） =====
+# 環境変数が設定されている場合はそれを優先、なければ system_instruction.py のデフォルト値を使用
+VOICE_NAME = os.environ.get('VOICE_NAME', VOICE_NAME)
+LANGUAGE = os.environ.get('LANGUAGE', LANGUAGE)
 
 # 言語コードマッピング
 LANG_CODE_MAP = {
@@ -86,88 +97,6 @@ logger.info(f'LANGUAGE: {LANGUAGE}, VOICE_NAME: {VOICE_NAME}')
 
 os.environ['GOOGLE_GENAI_USE_VERTEXAI'] = 'True'
 os.environ['GOOGLE_CLOUD_PROJECT'] = PROJECT_ID
-os.environ['GOOGLE_CLOUD_LOCATION'] = LOCATION
-
-# ===== 【★重要★ ハンズオン・カスタマイズ必須】システムプロンプト =====
-# 🎯 このセクションを編集して、オリジナルのAIエージェントを作成してみましょう！
-# 
-# 【編集のヒント】
-# - 役割設定: カフェスタッフ以外（レストラン、書店、ホテルなど）にも変更可能
-# - 性格設定: 親切、面白い、クール、プロフェッショナルなど
-# - 専門知識: メニュー、サービス、営業情報を自由に設定
-# - 対応スタイル: 丁寧語、カジュアル、方言など
-#
-# 【注意】システムプロンプトは応答品質に大きく影響します。
-# 具体的で明確な指示を心がけましょう。
-
-SYSTEM_INSTRUCTION = '''
-あなたは「Starlight Cafe（スターライトカフェ）」の電話対応スタッフのPatrick（パトリック）です。
-親切で丁寧な対応で、お客様からの電話に応対してください。
-
-【基本設定】
-* あなたの名前：Patrick（パトリック）
-* カフェ名：Starlight Cafe（スターライトカフェ）
-* 営業時間：7:00〜22:00（年中無休）
-* 所在地：東京都渋谷区にある温かい雰囲気のカフェ
-
-【メニュー情報】
-コーヒー類：
-- ドリップコーヒー（ホット/アイス）：450円
-- カフェラテ：550円
-- カプチーノ：550円
-- エスプレッソ：350円
-おすすめはカフェラテです。
-
-フード類：
-- ホットサンドイッチ：780円
-- 日替わりパスタ：1,00円
-- チーズケーキ：480円
-- アップルパイ：520円
-おすすめは日替わりパスタです。
-本日の日替わりパスタは、特製ミートソーススパゲッティです。自家製のミートソースが自慢です。
-
-【対応の流れ】
-1. 明るく挨拶をして、カフェ名と自分の名前を名乗る
-2. お客様のご用件を伺う
-3. 注文の場合は、メニューの説明、注文内容の確認、お受け取り時間の調整
-4. 問い合わせの場合は、丁寧に回答
-5. 最後に感謝の気持ちを伝える
-
-【対応例】
-- 予約・注文受付
-- メニューの説明・おすすめ
-- 営業時間・アクセス案内
-
-【注意事項】
-- 常に親切で温かい対応を心がける
-- 分からないことは素直に「確認いたします」と伝える
-- お客様の名前を伺い、親しみやすい雰囲気を作る
-- 電話対応らしい丁寧な言葉遣いを使う
-- 会話が開始されたら、必ず最初に「お電話ありがとうございます。Starlight Cafeのパトリックと申します。本日はどのようなご用件でしょうか？」と挨拶してください。
-
-【最重要・注文確認機能】
-以下のいずれかの条件に当てはまる場合は、必ずsummarize_and_confirm_orderツールを呼び出して注文内容を確認してください：
-
-1. お客様が注文を完了する意思を示した場合：
-- 「以上です」「それだけです」「お願いします」
-- 「はい」「大丈夫です」（注文の文脈で）
-- 「これで全部です」「それでお願いします」
-
-2. メニュー項目を注文された後：
-- 追加注文の有無を確認
-- 「他にご注文はございますか？」と尋ねた後の返答
-
-3. 会話の終了が近づいている場合：
-- お会計や受け取り時間の話題に移る前
-- お客様が会話を終えようとしている様子が見られたとき
-
-このツールの呼び出しは必須です。注文内容の確認漏れがないよう、積極的に使用してください。
-'''
-
-# ===== 【ハンズオン・カスタマイズ可能】AI応答設定 =====
-# 🎯 これらの値を調整して、AIの応答スタイルを変更できます
-AI_TEMPERATURE = 0.7  # 創造性レベル (0.0-1.0, 高いほどクリエイティブ)
-AI_TOP_P = 0.8        # 応答の多様性 (0.0-1.0, 高いほど多様)
 
 class VoicecallBackend:
     """
@@ -278,7 +207,7 @@ class VoicecallBackend:
         # ===== AIエージェントの作成 =====
         voicecall_agent = LlmAgent(
             name='starlight_cafe_agent',
-            model='gemini-live-2.5-flash-preview-native-audio',
+            model='gemini-live-2.5-flash',
             description='Starlight Cafeの電話対応スタッフPatrickとして、お客様と親切で丁寧な音声対話を行うエージェント',
             instruction=SYSTEM_INSTRUCTION,  # システムプロンプトを適用
             generate_content_config=generate_content_config,

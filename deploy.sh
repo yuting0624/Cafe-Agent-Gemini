@@ -2,7 +2,7 @@
 
 PROJECT_ID=$(gcloud config list --format "value(core.project)")
 PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format="value(projectNumber)")
-REGION=asia-northeast1
+REGION=us-central1
 REPO_NAME=cafe-agent-repo
 REPO=${REGION}-docker.pkg.dev/$PROJECT_ID/$REPO_NAME
 
@@ -107,9 +107,11 @@ if $DEPLOY_BACKEND; then
     --timeout=3600 \
     --memory=2Gi \
     --cpu=2 \
+    --min-instances=1 \
     --max-instances=10 \
     --concurrency=80 \
-    --port=8081
+    --port=8081 \
+    --set-env-vars="GOOGLE_CLOUD_LOCATION=us-central1,VOICE_NAME=Puck,LANGUAGE=Japanese"
   
   if [ $? -eq 0 ]; then
     echo "Backend deployment successful!"
@@ -160,6 +162,7 @@ if $DEPLOY_FRONTEND; then
     --service-account $FRONTEND_SERVICE_ACCOUNT \
     --memory=1Gi \
     --cpu=1 \
+    --min-instances=1 \
     --max-instances=10 \
     --concurrency=80 \
     --port=3000

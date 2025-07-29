@@ -19,7 +19,7 @@
 
 ### 🏗️ アーキテクチャ
 ユーザーの音声はブラウザを通じてFastAPIのバックエンドに送信され、そこからGemini Live APIにストリーミングされます。  AIからの音声応答は逆の経路でユーザーに返されます。
-- **モデル**: gemini-2.5-flash-preview-native-audio
+- **モデル**: gemini-live-2.5-flash
 - **通信**: フロントエンド ↔ バックエンド間はWebSocketで接続
 
 ```mermaid
@@ -40,6 +40,7 @@ Cafe-Agent-Gemini/
 ├── deploy.sh                    # Cloud Runへのデプロイスクリプト
 ├── backend/                     # バックエンド (FastAPI + Gemini Live API)
 │   ├── main.py                 # メインアプリケーション
+│   ├── system_instruction.py   # 🎯 ハンズオン・カスタマイズ設定ファイル
 │   ├── requirements.txt        # Python依存関係
 │   └── Dockerfile             # バックエンド用Dockerイメージ
 └── frontend/                   # フロントエンド (Next.js)
@@ -193,7 +194,19 @@ npm run dev
 
 #### 🎯 重要なカスタマイズポイント
 
-**1. システムプロンプト（最重要）**
+**🎯 ハンズオン・カスタマイズ専用ファイル: `backend/system_instruction.py`**
+
+ハンズオン時にカスタマイズする設定は、すべて`system_instruction.py`に分離されています。  
+`main.py`を直接編集する必要がなく、安全にカスタマイズできます。
+
+**1. 音声設定**
+```python
+# 音声の種類を選択
+VOICE_NAME = 'Puck'     # ["Aoede", "Puck", "Charon", "Kore", "Fenrir", "Leda", "Orus", "Zephyr"]
+LANGUAGE = 'Japanese'   # English, Japanese, Korean
+```
+
+**2. システムプロンプト（最重要）**
 ```python
 SYSTEM_INSTRUCTION = '''
 あなたは「Starlight Cafe」のPatrickです。
@@ -201,19 +214,16 @@ SYSTEM_INSTRUCTION = '''
 '''
 ```
 
-**2. AI応答設定**
+**3. AI応答設定**
 ```python
 AI_TEMPERATURE = 0.7  # ランダム性・創造性レベル (0.0-1.0)
 AI_TOP_P = 0.8        # 応答の多様性 (0.0-1.0)
 ```
 
-**3. 音声設定**
-```python
-VOICE_NAME = 'Puck'     # 音声の種類: Puck, Aoede など
-LANGUAGE = 'Japanese'   # 言語: Japanese, English, Korean
-```
-
 ## 🎓 Next Step: システムプロンプト演習
+
+**🎯 編集ファイル: `backend/system_instruction.py`**  
+**⚠️ 重要: `main.py`は編集しないでください**
 
 ### 📚 基礎課題
 
@@ -284,7 +294,7 @@ SYSTEM_INSTRUCTION = '''
 このツールの呼び出しは必須です。注文内容の確認漏れがないよう、積極的に使用してください。
 '''
 ```
-`backend/main.py`のシステムプロンプトを編集して、オリジナルカフェを作成してみましょう。
+`backend/system_instruction.py`のシステムプロンプトを編集して、オリジナルカフェを作成してみましょう。
 ```python
 # 🎯 練習: 以下の要素を変更してみてください
 SYSTEM_INSTRUCTION = '''
@@ -343,6 +353,7 @@ SYSTEM_INSTRUCTION = '''
 ```
 
 #### **課題4: 多言語対応**
+`system_instruction.py`で言語とシステムプロンプトを変更：
 ```python
 # 英語版エージェント
 LANGUAGE = 'English'
@@ -358,6 +369,7 @@ Provide excellent customer service in English.
 以下の空欄を埋めて、効果的なシステムプロンプトを完成させてください：
 
 ```python
+# system_instruction.py ファイル内
 SYSTEM_INSTRUCTION = '''
 あなたは「_______」の「_______」です。
 
@@ -380,6 +392,7 @@ SYSTEM_INSTRUCTION = '''
 
 **解答例:**
 ```python
+# system_instruction.py ファイル内
 SYSTEM_INSTRUCTION = '''
 あなたは「Ocean View Restaurant」の「マリン」です。
 
@@ -409,6 +422,11 @@ SYSTEM_INSTRUCTION = '''
 - 専門: 犬・猫のグッズ販売
 - 特徴: 動物愛護に熱心、専門知識豊富
 
+**📝 編集手順:**
+1. `backend/system_instruction.py`を開く
+2. `SYSTEM_INSTRUCTION`変数を編集
+3. 音声設定（`VOICE_NAME`、`LANGUAGE`）も必要に応じて調整
+
 ### 🎯 評価ポイント
 
 良いシステムプロンプトの条件：
@@ -434,11 +452,20 @@ WebSocket connection failed
 ```
 → `.env.local`ファイルの`NEXT_PUBLIC_BACKEND_URL`を確認
 
+**❌ system_instruction.pyが見つからない**
+```
+ModuleNotFoundError: No module named 'system_instruction'
+```
+→ `backend/`ディレクトリに`system_instruction.py`ファイルが存在するか確認
+
 **❌ 音声が聞こえない**
 → ブラウザのマイク・スピーカー許可を確認
 
 **❌ AIが応答しない**
-→ システムプロンプトの内容とGemini Live APIの制限を確認
+→ `system_instruction.py`のシステムプロンプトの内容とGemini Live APIの制限を確認
+
+**❌ カスタマイズが反映されない**
+→ バックエンドを再起動してください（`python main.py`）
 
 ### 🆘 サポート
 
