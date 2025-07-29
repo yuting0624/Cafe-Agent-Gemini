@@ -1,10 +1,10 @@
 # ☕ Starlight Cafe - Gemini Live API 音声対話システム
 
-**Google Cloud Gemini Live APIを活用したリアルタイム音声対話の技術デモ**
+**Google Cloud Gemini Live APIを活用したリアルタイム音声対話ハンズオンアプリ**
 
-このデモは[Etsujiさんのvideo-monitoring-handson](https://github.com/google-cloud-japan/sa-ml-workshop/tree/main/video-monitoring-handson)のsample02アプリをベースに作成したものです。
+このアプリは、架空のカフェ「Starlight Cafe」の電話対応をシミュレーションする、AIエージェント「Patrick」との音声通話Webアプリです。 Gemini Live APIのリアルタイム音声対話能力と、Function Callingによるタスク実行能力を体験できます。
 
-架空のカフェ「Starlight Cafe」の電話対応をシミュレーションする、AIエージェントとの音声通話Webアプリです。
+このアプリは[Etsujiさんのvideo-monitoring-handson](https://github.com/google-cloud-japan/sa-ml-workshop/tree/main/video-monitoring-handson)のsample02アプリをベースに作成したものです。
 
 ## 📋 コンテンツ全体像
 
@@ -18,6 +18,9 @@
 - **体験内容**: リアルタイム双方向音声ストリーミング + インテリジェント注文管理
 
 ### 🏗️ アーキテクチャ
+ユーザーの音声はブラウザを通じてFastAPIのバックエンドに送信され、そこからGemini Live APIにストリーミングされます。  AIからの音声応答は逆の経路でユーザーに返されます。
+- **モデル**: gemini-2.5-flash-preview-native-audio
+- **通信**: フロントエンド ↔ バックエンド間はWebSocketで接続
 
 ```mermaid
 graph LR
@@ -51,7 +54,7 @@ Cafe-Agent-Gemini/
     └── Dockerfile            # フロントエンド用Dockerイメージ
 ```
 
-## 🔧 事前準備
+## 🔧 事前準備（ローカルで実行する場合）
 
 ### 1. **環境要件**
 - **Node.js**: 22.15.0以上
@@ -133,11 +136,11 @@ npm run dev
 
 ### 🎙️ 音声対話の流れ
 
-1. **🌐 ブラウザアクセス**: http://localhost:3000
-2. **☕ 接続**: 「カフェに電話をかける」ボタンをクリック
-3. **🎤 音声入力**: 「マイクをオンにする」ボタンをクリックして話しかける
-4. **🤖 AI応答**: Patrickがリアルタイムで音声応答
-5. **🔄 会話継続**: 自然な対話を楽しむ
+1. **🌐 ブラウザアクセス**: 
+2. **☕ 接続**: 「カフェに電話をかける」ボタンをクリックすると、AIエージェントのPatrickから挨拶があります。
+3. **🎤 音声入力**: 話しかける
+4. **🤖 AI応答**: Patrickがリアルタイムで応答し、会話から注文内容を理解します
+5. **🔄 会話継続**: 自然な対話を楽しむ。注文が完了すると、PatrickはFunction Callingを自律的に実行し、画面に注文内容の要約を表示します
 6. **📞 終了**: 「通話を終了」ボタンで切断
 
 ### 💬 会話例
@@ -166,7 +169,7 @@ npm run dev
 合計: 1,070円
 お受け取り予定: 15分後
 
-👤 ユーザー: [✅ この内容で確定] ボタンをクリック
+👤 ユーザー: 間違いないです。お願いします。
 🤖 Patrick: 「ありがとうございます。15分後にご用意いたします」
 ```
 
@@ -200,7 +203,7 @@ SYSTEM_INSTRUCTION = '''
 
 **2. AI応答設定**
 ```python
-AI_TEMPERATURE = 0.7  # 創造性レベル (0.0-1.0)
+AI_TEMPERATURE = 0.7  # ランダム性・創造性レベル (0.0-1.0)
 AI_TOP_P = 0.8        # 応答の多様性 (0.0-1.0)
 ```
 
@@ -208,25 +211,6 @@ AI_TOP_P = 0.8        # 応答の多様性 (0.0-1.0)
 ```python
 VOICE_NAME = 'Puck'     # 音声の種類: Puck, Aoede など
 LANGUAGE = 'Japanese'   # 言語: Japanese, English, Korean
-```
-
-**4. Function Calling設定**
-```python
-def get_order_tools(self):
-    """注文確認用のFunction Callingツール"""
-    async def summarize_and_confirm_order(items: list, total_price: int, pickup_time: str = "15分後"):
-        # 注文内容を構造化データとして処理
-        # WebSocket経由でフロントエンドに送信
-        return confirmation_message
-    
-    return [summarize_and_confirm_order]
-
-# システムプロンプトで Function Calling を指示
-SYSTEM_INSTRUCTION = '''
-【注文確認機能】
-お客様が注文を完了したとき（「それでお願いします」「注文をお願いします」など）は、
-必ずsummarize_and_confirm_order関数を使用して注文内容を確認してください。
-'''
 ```
 
 ## 🎓 Next Step: システムプロンプト演習
@@ -260,6 +244,7 @@ SYSTEM_INSTRUCTION = '''
 - チーズケーキ：480円
 - アップルパイ：520円
 おすすめは日替わりパスタです。
+本日の日替わりパスタは、特製ミートソーススパゲッティです。自家製のミートソースが自慢です。
 
 【対応の流れ】
 1. 明るく挨拶をして、カフェ名と自分の名前を名乗る
@@ -278,8 +263,25 @@ SYSTEM_INSTRUCTION = '''
 - 分からないことは素直に「確認いたします」と伝える
 - お客様の名前を伺い、親しみやすい雰囲気を作る
 - 電話対応らしい丁寧な言葉遣いを使う
+- 会話が開始されたら、必ず最初に「お電話ありがとうございます。Starlight Cafeのパトリックと申します。本日はどのようなご用件でしょうか？」と挨拶してください。
 
-【重要】会話が開始されたら、必ず最初に「お電話ありがとうございます。Starlight Cafeのパトリックと申します。本日はどのようなご用件でしょうか？」と挨拶してください。
+【最重要・注文確認機能】
+以下のいずれかの条件に当てはまる場合は、必ずsummarize_and_confirm_orderツールを呼び出して注文内容を確認してください：
+
+1. お客様が注文を完了する意思を示した場合：
+- 「以上です」「それだけです」「お願いします」
+- 「はい」「大丈夫です」（注文の文脈で）
+- 「これで全部です」「それでお願いします」
+
+2. メニュー項目を注文された後：
+- 追加注文の有無を確認
+- 「他にご注文はございますか？」と尋ねた後の返答
+
+3. 会話の終了が近づいている場合：
+- お会計や受け取り時間の話題に移る前
+- お客様が会話を終えようとしている様子が見られたとき
+
+このツールの呼び出しは必須です。注文内容の確認漏れがないよう、積極的に使用してください。
 '''
 ```
 `backend/main.py`のシステムプロンプトを編集して、オリジナルカフェを作成してみましょう。
