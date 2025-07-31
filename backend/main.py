@@ -210,17 +210,17 @@ class VoicecallBackend:
             tools = self.get_order_tools()
         else:
             logger.info("ℹ️ Function Callingツールを無効にしてエージェントを作成します。")
-            instruction = SYSTEM_INSTRUCTION_BASE
-            tools = None
+            instruction = SYSTEM_INSTRUCTION
+            tools = []
 
         # ===== AIエージェントの作成 =====
         voicecall_agent = LlmAgent(
             name='starlight_cafe_agent',
             model='gemini-live-2.5-flash',
             description='Starlight Cafeの電話対応スタッフPatrickとして、お客様と親切で丁寧な音声対話を行うエージェント',
-            instruction=SYSTEM_INSTRUCTION,  # システムプロンプトを適用
+            instruction=instruction,  # システムプロンプトを適用
             generate_content_config=generate_content_config,
-            tools=order_tools,  # Function Callingツールを追加
+            tools=tools,  # Function Callingツールを追加
         )
 
         # ランナーの作成
