@@ -38,6 +38,8 @@ graph LR
 Cafe-Agent-Gemini/
 ├── README.md                    # このファイル
 ├── deploy.sh                    # Cloud Runへのデプロイスクリプト
+├── start_handson.sh             # Cloud Shellでハンズオン開始スクリプト
+├── requirements.txt             # Python依存関係
 ├── backend/                     # バックエンド (FastAPI + Gemini Live API)
 │   ├── main.py                 # メインアプリケーション
 │   ├── system_instruction.py   # 🎯 ハンズオン・カスタマイズ設定ファイル

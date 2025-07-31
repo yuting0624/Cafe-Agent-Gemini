@@ -31,7 +31,7 @@ import time
 import uuid
 import google.auth
 from dotenv import load_dotenv
-from system_instruction import SYSTEM_INSTRUCTION, AI_TEMPERATURE, AI_TOP_P, VOICE_NAME, LANGUAGE
+from system_instruction import SYSTEM_INSTRUCTION, SYSTEM_INSTRUCTION_TOOL_EXTENSION, AI_TEMPERATURE, AI_TOP_P, VOICE_NAME, LANGUAGE
 
 from google.genai.types import (
     Part,
@@ -81,6 +81,8 @@ if not PROJECT_ID:
 # Environment setup
 LOCATION = os.getenv('GOOGLE_CLOUD_LOCATION', 'us-central1')
 os.environ['GOOGLE_CLOUD_LOCATION'] = LOCATION
+# ★環境変数でToolの使用を切り替えるフラグ
+USE_TOOL = os.getenv('USE_ORDER_TOOL', 'False').lower() in ('true', '1', 't')
 
 # ===== 音声設定（環境変数 or system_instruction.py からの設定） =====
 # 環境変数が設定されている場合はそれを優先、なければ system_instruction.py のデフォルト値を使用
@@ -201,8 +203,15 @@ class VoicecallBackend:
             top_p=AI_TOP_P,             # 応答の多様性
         )
         
-        # ===== Function Calling用ツールの取得 =====
-        order_tools = self.get_order_tools()
+        # ★USE_TOOLフラグに応じて、プロンプトとToolを切り替える
+        if USE_TOOL:
+            logger.info("✅ Function Callingツールを有効にしてエージェントを作成します。")
+            instruction = SYSTEM_INSTRUCTION + SYSTEM_INSTRUCTION_TOOL_EXTENSION
+            tools = self.get_order_tools()
+        else:
+            logger.info("ℹ️ Function Callingツールを無効にしてエージェントを作成します。")
+            instruction = SYSTEM_INSTRUCTION_BASE
+            tools = None
 
         # ===== AIエージェントの作成 =====
         voicecall_agent = LlmAgent(
@@ -410,8 +419,6 @@ async def handler(websocket: WebSocket):
 if __name__ == '__main__':
     import uvicorn
     logger.info("🚀 開発サーバーを起動中...")
-    logger.info("📍 URL: http://localhost:8081")
-    logger.info("🔗 WebSocket: ws://localhost:8081/ws")
     
     uvicorn.run(
         'main:app', 
