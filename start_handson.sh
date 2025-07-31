@@ -1,8 +1,10 @@
 #!/bin/bash
 
+# export USE_ORDER_TOOL=True
+
 echo "🚀 ハンズオン環境の自動セットアップを開始します..."
 
-# --- ★改善点★ 古いプロセスが残っていたら自動的に停止する ---
+# --- 古いプロセスが残っていたら自動的に停止する ---
 echo "🧹 古いサーバープロセスをクリーンアップします..."
 pkill -f "python main.py"
 pkill -f "next dev --hostname localhost --port 3001"
